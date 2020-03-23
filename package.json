@@ -1,5 +1,5 @@
 {
-  "name": "exam",
+  "name": "Exam",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "axios": "^0.19.2",
+    "compression-webpack-plugin": "^3.1.0",
     "core-js": "^3.6.4",
     "js-md5": "^0.7.3",
     "vue": "^2.6.11",
