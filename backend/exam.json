@@ -1,0 +1,46 @@
+{
+    "name": "《系统与体系结构》期中考试",
+    "items": [
+        {
+            "problem_type": "simple-select",
+            "label": "单项选择",
+            "type": "select",
+            "multiple": false,
+            "rand_options": true,
+            "num": 3
+        },
+        {
+            "problem_type": "multiple-select",
+            "label": "多项选择",
+            "type": "select",
+            "multiple": true,
+            "rand_options": true,
+            "num": 3
+        },
+        {
+            "problem_type": "judge",
+            "label": "单项选择",
+            "type": "select",
+            "multiple": false,
+            "rand_options": false,
+            "num": 3
+        },
+        {
+            "problem_type": "text",
+            "label": "",
+            "type": "text",
+            "num": 2
+        },
+        {
+            "problem_type": "text-2",
+            "type": "text",
+            "num": 2
+        },
+        {
+            "type": "submit",
+            "num": 1,
+            "title": "提交题目",
+            "body": "请仔细核对是否有遗忘的题目"
+        }
+    ]
+}

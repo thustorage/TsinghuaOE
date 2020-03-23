@@ -1,0 +1,32 @@
+{
+    "simple-select": [
+        "./problems/001.json",
+        "./problems/002.json",
+        "./problems/003.json",
+        "./problems/004.json",
+        "./problems/005.json"
+    ],
+    "multiple-select": [
+        "./problems/006.json",
+        "./problems/007.json",
+        "./problems/008.json",
+        "./problems/009.json",
+        "./problems/010.json"
+    ],
+    "judge": [
+        "./problems/011.json",
+        "./problems/012.json",
+        "./problems/013.json",
+        "./problems/014.json",
+        "./problems/015.json"
+    ],
+    "text": [
+        "./problems/016.json",
+        "./problems/017.json"
+    ],
+    "text-2": [
+        "./problems/018.json",
+        "./problems/019.json",
+        "./problems/020.json"
+    ]
+}
