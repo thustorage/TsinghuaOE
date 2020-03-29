@@ -18,18 +18,22 @@ npm run build
 本命令将在本目录下生成`./dist`，请将`80`端口解析至`./dist`。
 
 ## 后端配置
-安装依赖包。
+安装依赖包（以Ubuntu18.04为例）。
 ```
 apt install ttf-wqy-zenhei
 apt install redis
+apt install pandoc
+apt install firefox
 pip install pillow
 pip install flask
 pip install flask-redis
+pip install pypandoc
 ```
 运行redis。
 ```
 redis
 ```
+
 ### 添加学生
 请参考`./backend/stu.json`描述文件。在将学生添加至数据库前，需要按照格式编写学生的学号，密码（`password`）为可选项，如无则将自动生成。
 ```
@@ -62,6 +66,7 @@ gunicorn -w4 -b0.0.0.0:5000 index:app
 ```
 
 ##　可供参考的Nginx配置文件
+
 ```
 ....
         location / {

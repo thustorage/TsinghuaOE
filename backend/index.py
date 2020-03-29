@@ -50,6 +50,8 @@ def exam():
     dic = json.loads(res)
     if 'items' not in dic:
         return {'code':2, 'message': "用户未被授权当前考试"}
+    if 'p_id' in dic['items']:
+        dic['items']['p_id'] = '*'
     return {'code':0, 'items':dic['items']}
 
 @app.route('/app/submit',methods = ['POST'])

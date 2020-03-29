@@ -32,7 +32,7 @@
               width="800px"
             >
               <v-card-text>
-              <v-img :src="item.path" max-height=300 min-height=300 max-width=700px contain>
+              <v-img :src="item.path" min-height=300 min-width=500 max-width=700  contain>
               </v-img>
               </v-card-text>
               <v-card-actions>

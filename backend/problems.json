@@ -1,4 +1,5 @@
 {
+    "problem_dir": "./problems-markdown",
     "simple-select": [
         "./problems/001.json",
         "./problems/002.json",

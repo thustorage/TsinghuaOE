@@ -1,0 +1,31 @@
+{
+    "name": "《系统与体系结构》期中考试",
+    "items": [
+        {
+            "problem_type": "./problems-markdown/choice",
+            "label": "单项选择",
+            "type": "select",
+            "multiple": false,
+            "num": 1
+        },
+        {
+            "problem_type": "./problems-markdown/judge",
+            "label": "判断正误",
+            "type": "select",
+            "multiple": false,
+            "num": 1
+        },
+        {
+            "problem_type": "./problems-markdown/big",
+            "label": "",
+            "type": "text",
+            "num": 1
+        },
+        {
+            "type": "submit",
+            "num": 1,
+            "title": "提交题目",
+            "body": "请仔细核对是否有遗忘的题目"
+        }
+    ]
+}
