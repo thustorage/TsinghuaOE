@@ -126,9 +126,11 @@
         that.$router.replace('/');
         console.log(error)
       });
-      
+      this._autosubmit();
     },
     data: () => ({
+      submitted: false,
+      timer: null,
       e1: 1,
       index: 1,
       items: [
@@ -143,6 +145,27 @@
       },
     },
     methods: {
+      _autosubmit () {
+        let that = this;
+          this.timer = setInterval( () => {
+            if (that.submitted) {return;}
+            axios({
+              method: 'post',
+              url: '/app/submit',
+              data: {token: that.$store.state.Authorization, answers: that.answers}
+            }).then(res => {
+              if (res.data.code === 0) {
+                // alert("提交成功");
+                console.log(res.data);
+              } else {
+                alert("自动提交失败，请联系助教");
+              }
+            }).catch(error => {
+              alert('自动提交失败，请联系助教');
+              console.log(error);
+            });
+          }, 5000);
+      },
       nextStep (n) {
         if (n === this.items.length) {
           this.e1 = 1
@@ -158,6 +181,7 @@
         }
       },
       submit () {
+        let that = this;
         axios({
           method: 'post',
           url: '/app/submit',
@@ -166,11 +190,14 @@
           if (res.data.code === 0) {
             alert("提交成功");
             console.log(res.data);
+            that.submitted = true;
           } else {
             alert("提交失败");
+            that.submitted = false;
           }
         }).catch(error => {
           alert('提交失败');
+          that.submitted = false;
           console.log(error);
         });
       }
