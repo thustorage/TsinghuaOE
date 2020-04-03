@@ -36,24 +36,21 @@
               </v-img>
               </v-card-text>
               <v-card-actions>
-                <v-select
-                  v-if="item.type==='select'"
-                  v-model="answers[item.id]"
-                  :items="item.options"
-                  :label="item.label"
-                  :multiple="item.multiple"
-                ></v-select>
-                <v-textarea
-                  v-if="item.type==='text' && item.blanks.length === 0"
-                  v-model="answers[item.id]"
-                  clearable="true"
-                  filled
-                  auto-grow
-                  solo
-                  label="请在此输入答案"
-                ></v-textarea>
                 <v-container fluid>
                   <v-row dense>
+                    <v-col
+                     v-if="item.type==='select'"
+                     cols="12"
+                    >
+                      <v-select
+                        v-if="item.type==='select'"
+                        v-model="answers[item.id]"
+                        :items="item.options"
+                        :label="item.label"
+                        :multiple="item.multiple"
+                      ></v-select>
+                    </v-col>
+                    
                     <v-col
                       v-for="blank in item.blanks"
                       :key="blank"
@@ -65,7 +62,22 @@
                         clearable="true"
                         filled
                         auto-grow
+                        outlined
                         :label="blank"
+                      ></v-textarea>
+                    </v-col>
+                    <v-col
+                     v-if="item.type==='text'"
+                     cols="12"
+                    >
+                      <v-textarea
+                        v-if="item.type==='text'"
+                        v-model="answers[item.id]['text']"
+                        clearable="true"
+                        filled
+                        auto-grow
+                        outlined
+                        label="请在此输入答案"
                       ></v-textarea>
                     </v-col>
                   </v-row>
@@ -139,7 +151,7 @@
         if (res.data.code === 0) {
           for (let item in res.data.items) {
             that.items.push(res.data.items[item]);
-            if(res.data.items[item].blanks.length!=0) {
+            if(res.data.items[item].type==='text') {
               this.answers[res.data.items[item].id] = {};
             }
           }
