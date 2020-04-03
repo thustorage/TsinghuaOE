@@ -1,6 +1,7 @@
 import redis
 import json
 import os
+import re
 import random
 import unicodedata
 import argparse
@@ -11,6 +12,10 @@ warnings.filterwarnings('ignore')
 from PIL import Image, ImageFont, ImageDraw 
 
 from selenium import webdriver
+
+### re
+blank_re = re.compile(r'\{.+\}')
+option_re = re.compile(r"^- (.*)")
 
 def chr_width(c):
     if (unicodedata.east_asian_width(c) in ('F','W','A')):
@@ -67,22 +72,36 @@ def problem_gen_rawtext(id, dist, problem):
 def problem_gen_markdown(id, dist, problem):
     from tempfile import NamedTemporaryFile
     import pypandoc
-    import re
     name_options = []
+    name_blanks = []
+    standard = {}
     with open(problem) as pf:
         with NamedTemporaryFile("w") as tf:
             options = []
+            blanks = []
+            blank_index = 0
             for line in pf:
                 if re.match(r"^- (.*)", line) is not None:
-                    options.append(line)
+                    options.append((len(options), line))
+                elif blank_re.search(line) is not None:
+                    for item in blank_re.findall(line):
+                        blanks.append(item)
+                        name_blanks.append(f"<{blank_index}>")
+                        line = blank_re.sub(f"[<  {blank_index}  >](10.0.0.0)", line, 1)
+                        blank_index += 1
+                    tf.write(line)
                 elif re.match(r"^# (.*)", line) is not None:
                     continue
                 else:
                     tf.write(line)
             s_options = random.sample(options, len(options))
+            for index, (op_id, option) in enumerate(s_options):
+                if op_id == 0:
+                    standard['op'] = index
+            standard['blank'] = blanks
             if len(s_options) == 4:
                 insert_list = ['A: ', 'B: ', 'C: ', 'D: ']
-                for index, option in enumerate(s_options):
+                for index, (op_id, option) in enumerate(s_options):
                     option = list(option)
                     option.insert(2, insert_list[index])
                     option_t = ''.join(option) + '\n'
@@ -113,8 +132,8 @@ def problem_gen_markdown(id, dist, problem):
                         wm_dr.text((int(im.size[0]/10 * i), int(im.size[1]/10 * i)), str(id), font=wm_front, fill=(0,0,0,80))
                     im = Image.alpha_composite(im, wm_layer)
                     im.save(dist)
-                
-    return problem, name_options, dist
+
+    return problem, name_options, dist, name_blanks, standard
 
 def problem_gen(id, dist, problem, p_type):
     if p_type == 'rawtext':
@@ -125,6 +144,7 @@ def problem_gen(id, dist, problem, p_type):
 def exam_gen(r, stu_id, token, dist, items, problems, p_type):
     os.makedirs(dist)
     dist_list = []
+    standards_list = []
     id = 1
     for index, item in enumerate(items):
         length = item['num']
@@ -133,8 +153,10 @@ def exam_gen(r, stu_id, token, dist, items, problems, p_type):
             s_problems = random.sample(problems[item['problem_type']], length)
         for i, s_problem in enumerate(s_problems):
             s_problem_options = []
+            blanks = []
             if item['type'] != 'submit':
-                p_id, s_problem_options, path = problem_gen(stu_id, os.path.join(dist, f"str{id}.png"), s_problem, p_type)
+                p_id, s_problem_options, path, blanks, standard = problem_gen(stu_id, os.path.join(dist, f"str{id}.png"), s_problem, p_type)
+                standards_list.append(standard)
             if 'rand_options' in item and item['rand_options']:
                 s_problem_options = random.sample(s_problem_options, len(s_problem_options))
             dist_list += [
@@ -144,6 +166,7 @@ def exam_gen(r, stu_id, token, dist, items, problems, p_type):
                     'label':  item['label'] if 'label' in item else '',
                     'path': path if item['type'] != 'submit' else '',
                     'options': s_problem_options,
+                    'blanks': blanks,
                     'multiple': item['multiple'] if 'multiple' in item else '',
                     'title': item['title'] if 'title' in item else '',
                     'body': item['body'] if 'body' in item else '',
@@ -151,7 +174,8 @@ def exam_gen(r, stu_id, token, dist, items, problems, p_type):
                 }
             ]
             id += 1
-    assert r.set(token, json.dumps({'items': dist_list}))
+    assert r.set(token, json.dumps({'items': dist_list, 'standards': standards_list}))
+
 
 def md5(text):
     m = hashlib.md5()
@@ -237,4 +261,4 @@ if __name__ == '__main__':
         main_rawtext(args)
     else:
         main_markdown(args)
-    driver.quit()
+

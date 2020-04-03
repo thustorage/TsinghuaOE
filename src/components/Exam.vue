@@ -44,7 +44,7 @@
                   :multiple="item.multiple"
                 ></v-select>
                 <v-textarea
-                  v-if="item.type==='text'"
+                  v-if="item.type==='text' && item.blanks.length === 0"
                   v-model="answers[item.id]"
                   clearable="true"
                   filled
@@ -52,6 +52,24 @@
                   solo
                   label="请在此输入答案"
                 ></v-textarea>
+                <v-container fluid>
+                  <v-row dense>
+                    <v-col
+                      v-for="blank in item.blanks"
+                      :key="blank"
+                      :cols="12"
+                    >
+                      <v-textarea
+                        :key="blank"
+                        v-model="answers[item.id][blank]"
+                        clearable="true"
+                        filled
+                        auto-grow
+                        :label="blank"
+                      ></v-textarea>
+                    </v-col>
+                  </v-row>
+                </v-container>
               </v-card-actions>
             </v-card>
             <v-btn
@@ -88,6 +106,7 @@
                 <v-btn
                   v-if="item.type==='submit'"
                   color="primary"
+                  :disabled="enable_submit"
                   @click="submit"
                 >
                 确认提交
@@ -95,13 +114,14 @@
               </v-card-actions>
             </v-card>
           </v-stepper-content>
+        </template>
       </v-stepper>
     </v-layout>
   </v-container>
 </template>
 
 <script>
-  // import md5 from 'js-md5';
+  import md5 from 'js-md5';
   import axios from 'axios';
 
   export default {
@@ -111,11 +131,20 @@
       axios({
         method: 'post',
         url: '/app/exam',
-        data: {token: this.$store.state.Authorization}
+        data: {
+          id: md5(this.$store.state.id),
+          token: this.$store.state.Authorization
+        }
       }).then(res => {
         if (res.data.code === 0) {
           for (let item in res.data.items) {
             that.items.push(res.data.items[item]);
+            if(res.data.items[item].blanks.length!=0) {
+              this.answers[res.data.items[item].id] = {};
+            }
+          }
+          for (let item in res.data.answers) {
+            that.answers[item] = res.data.answers[item];
           }
         } else {
           alert(res.data.message)
@@ -128,7 +157,11 @@
       });
       this._autosubmit();
     },
+    beforeDestroy: function() {
+      clearInterval(this.timer);
+    },
     data: () => ({
+      enable_submit: false,
       submitted: false,
       timer: null,
       e1: 1,
@@ -152,13 +185,14 @@
             axios({
               method: 'post',
               url: '/app/submit',
-              data: {token: that.$store.state.Authorization, answers: that.answers}
+              data: {
+                id: md5(that.$store.state.id),
+                token: that.$store.state.Authorization,
+                answers: that.answers
+              }
             }).then(res => {
-              if (res.data.code === 0) {
-                // alert("提交成功");
-                console.log(res.data);
-              } else {
-                alert("自动提交失败，请联系助教");
+              if (res.data.code !== 0) {
+                alert(res.data.message);
               }
             }).catch(error => {
               alert('自动提交失败，请联系助教');
@@ -181,25 +215,34 @@
         }
       },
       submit () {
+        this.enable_submit = true;
         let that = this;
         axios({
           method: 'post',
           url: '/app/submit',
-          data: {token: this.$store.state.Authorization, answers: this.answers}
+          data: {
+            id: md5(that.$store.state.id),
+            token: this.$store.state.Authorization,
+            answers: this.answers
+          }
         }).then(res => {
           if (res.data.code === 0) {
-            alert("提交成功");
+            alert("提交成功！请注意：以最后一次提交的内容为准。");
             console.log(res.data);
             that.submitted = true;
           } else {
-            alert("提交失败");
+            alert(res.data.message);
             that.submitted = false;
           }
         }).catch(error => {
           alert('提交失败');
           that.submitted = false;
           console.log(error);
-        });
+        }).then(
+          ()=> {
+            that.enable_submit = false;
+          }
+        );
       }
     },
   }
