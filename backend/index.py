@@ -1,6 +1,7 @@
 from flask import Flask, request
 import json
 from flask_redis import FlaskRedis
+import logging
 
 app = Flask(__name__)
 
@@ -71,13 +72,14 @@ def exam():
         app.logger.warning(f"Error Access from {request.headers['X-Real-Ip']}: {data}")
         return {'code':4, 'message': "提交的信息不全。"}
     res = redis_store.get(data['token'])
-    stu_id = data['id']
+    stu_id_md5 = data['id']
     if res is None:
         return {'code': 5, "message": "用户未被授权访问"}
-    token_res = json.loads(redis_store.get(stu_id))
+    token_res = json.loads(redis_store.get(stu_id_md5))
     if token_res is None or 'token' not in token_res or data['token'] != token_res['token']:
         return {'code': 6, "message": "用户无法参加当前考试"}
     dic = json.loads(res)
+    print(dic['standards'])
     if 'items' not in dic:
         return {'code':7, 'message': "用户未被授权当前考试"}
     for item in dic['items']:
@@ -105,19 +107,20 @@ def submit():
         app.logger.warning(f"[Error Access] {request.headers['X-Real-Ip']}: {data}")
         return {'code':8, 'message': "提交的信息不全。"}
     res = redis_store.get(data['token'])
-    stu_id = data['id']
+    stu_id_md5 = data['id']
     if res is None:
         app.logger.warning(f"[Error Access] {request.headers['X-Real-Ip']}: {data}")
         return {'code': 9, "message": "用户未被授权访问"}
-    token_res = json.loads(redis_store.get(stu_id))
+    token_res = json.loads(redis_store.get(stu_id_md5))
     if token_res is None or 'token' not in token_res or data['token'] != token_res['token']:
         return {'code': 10, "message": "用户无法参加当前考试"}
+    stu_id = token_res['stu_id']
     dic = json.loads(res)
     if not ip_check(request, dic):
         if 'ip' not in dic:
             dic['ip'] = []
         else:
-            warning_info = f"[IP Switch] {stu_id} from {dic['ip'][-1]} to {request.headers['X-Real-Ip']}"
+            warning_info = f"[IP Switch] {stu_id} from {dic['ip'][-1]} to {request.headers['X-Real-Ip']}"      
             app.logger.warning(warning_info)
         dic['ip'].append(request.headers['X-Real-Ip'])
 
@@ -131,3 +134,8 @@ def submit():
 
 if __name__=="__main__":
     app.run()
+
+if __name__ != '__main__':
+    gunicorn_logger = logging.getLogger('gunicorn.access')
+    app.logger.handlers = gunicorn_logger.handlers
+    app.logger.setLevel(gunicorn_logger.level)

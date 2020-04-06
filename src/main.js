@@ -18,7 +18,9 @@ const store = new Vuex.Store({
         localStorage.getItem('Authorization') :
         '',
     id: localStorage.getItem('id') ? localStorage.getItem('id') : '',
-
+    submitted: localStorage.getItem('submitted') === true ?
+        localStorage.getItem('submitted') :
+        false
   },
 
   mutations: {
@@ -27,6 +29,11 @@ const store = new Vuex.Store({
       state.id = user.id;
       localStorage.setItem('Authorization', user.Authorization);
       localStorage.setItem('id', user.id);
+    },
+    update_submit(state, user) {
+      state.submitted = user.submit;
+      console.log(state.submitted);
+      localStorage.setItem('submitted', user.submit);
     }
   }
 });

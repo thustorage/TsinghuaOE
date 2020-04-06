@@ -14,7 +14,7 @@ from PIL import Image, ImageFont, ImageDraw
 from selenium import webdriver
 
 ### re
-blank_re = re.compile(r'\{.+\}')
+blank_re = re.compile(r'%{.+?}%')
 option_re = re.compile(r"^- (.*)")
 
 def chr_width(c):
@@ -69,29 +69,46 @@ def problem_gen_rawtext(id, dist, problem):
     options = problem['options']
     return problem['text'], options, dist
 
-def problem_gen_markdown(id, dist, problem):
+def problem_gen_markdown(id, dist, problem, p_type):
     from tempfile import NamedTemporaryFile
     import pypandoc
     name_options = []
     name_blanks = []
     standard = {}
+    print(problem)
     with open(problem) as pf:
         with NamedTemporaryFile("w") as tf:
             options = []
+            option_index = 0
             blanks = []
             blank_index = 0
+            value_dict = {}
             for line in pf:
-                if re.match(r"^- (.*)", line) is not None:
-                    options.append((len(options), line))
-                elif blank_re.search(line) is not None:
+                if (p_type == 'judge' or p_type == 'select'):
+                    value_list = re.findall(r"%{(.+?)}%", line)
+                    if len(value_list) > 0:
+                        for value in value_list:
+                            for key in value_dict:
+                                if type(value_dict[key]) is str:
+                                    value = re.sub(f"{key}", f"'{value_dict[key]}'", value)
+                                else:
+                                    value = re.sub(f"{key}", f"{value_dict[key]}", value)
+                            value = str(eval(value))
+                            line = re.sub(r"%{(.+?)}%", value, line, 1)
+                if (p_type == 'judge' or p_type == 'select') and re.match(r"^- (.*)", line) is not None:
+                    options.append((option_index,line))
+                    option_index += 1
+                elif p_type == 'text' and blank_re.search(line) is not None:
                     for item in blank_re.findall(line):
                         blanks.append(item)
                         name_blanks.append(f"<{blank_index}>")
                         line = blank_re.sub(f"[<  {blank_index}  >](10.0.0.0)", line, 1)
                         blank_index += 1
                     tf.write(line)
-                elif re.match(r"^# (.*)", line) is not None:
-                    continue
+                elif re.match(r"^\$ (.*)", line) is not None:
+                    var = re.search(r"^\$ (\S+?)(\s*?)=", line).group(1)
+                    value = re.search(r"^\$(.*?)=(.*)$", line).group(2)
+                    value_dict[str(var)] = random.sample(eval(value), 1)[0]
                 else:
                     tf.write(line)
             s_options = random.sample(options, len(options))
@@ -99,30 +116,37 @@ def problem_gen_markdown(id, dist, problem):
                 if op_id == 0:
                     standard['op'] = index
             standard['blank'] = blanks
-            if len(s_options) == 4:
-                insert_list = ['A: ', 'B: ', 'C: ', 'D: ']
+            if p_type == 'select':
+                insert_list = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
                 for index, (op_id, option) in enumerate(s_options):
                     option = list(option)
-                    option.insert(2, insert_list[index])
+                    option.insert(2, insert_list[index] + ': ')
                     option_t = ''.join(option) + '\n'
                     tf.write(option_t)
-                name_options = ['A', 'B', 'C', 'D']
-            elif len(s_options) == 2:
-                name_options = ['T', 'F']
+                    name_options.append(insert_list[index])
+            elif p_type == 'judge':
+                standard['op'] = options[0]
+                name_options = ['正确', '错误']
             else:
                 pass
             tf.flush()
-            pypandoc.convert(tf.name, 'html', format='md', outputfile=dist)
+            # pypandoc.convert(tf.name, 'html', format='md', outputfile=tmp_dist)
             with NamedTemporaryFile("w") as html_tf:
-                pypandoc.convert(tf.name, 'html', format='markdown+footnotes+pipe_tables',outputfile=html_tf.name)
+                ori_path = os.path.dirname(os.path.realpath(__file__))
+                tmp_dist = os.path.realpath(dist)
+                html_path = os.path.realpath(problem) + '.html'
+                css_path = os.path.realpath('temp.css')
+                os.chdir(os.path.dirname(os.path.realpath(problem)))
+                pypandoc.convert(tf.name, 'html5', extra_args=[f'-c {css_path}', '-s'], format='markdown', outputfile=html_path)
                 # driver.delete_all_cookies()
-                driver.set_window_size(500, 300)
-                driver.get(f"file:{html_tf.name}")
+                driver.set_window_size(600, 300)
+                driver.get(f"file:{html_path}")
                 scroll_height = driver.execute_script('return document.body.scrollHeight')
                 scroll_width = driver.execute_script('return document.body.scrollWidth')
                 driver.set_window_size(scroll_width, scroll_height+80)
                 with NamedTemporaryFile() as image_tf:
                     driver.save_screenshot(image_tf.name)
+                    os.chdir(ori_path)
                     im = Image.open(image_tf.name)
                     im = im.convert('RGBA')
                     wm_front = ImageFont.truetype('wqy-zenhei.ttc', 10)
@@ -132,14 +156,12 @@ def problem_gen_markdown(id, dist, problem):
                         wm_dr.text((int(im.size[0]/10 * i), int(im.size[1]/10 * i)), str(id), font=wm_front, fill=(0,0,0,80))
                     im = Image.alpha_composite(im, wm_layer)
                     im.save(dist)
+                
 
     return problem, name_options, dist, name_blanks, standard
 
 def problem_gen(id, dist, problem, p_type):
-    if p_type == 'rawtext':
-        return problem_gen_rawtext(id, dist, problem)
-    else:
-        return problem_gen_markdown(id, dist, problem)
+    return problem_gen_markdown(id, dist, problem, p_type)
 
 def exam_gen(r, stu_id, token, dist, items, problems, p_type):
     os.makedirs(dist)
@@ -155,7 +177,7 @@ def exam_gen(r, stu_id, token, dist, items, problems, p_type):
             s_problem_options = []
             blanks = []
             if item['type'] != 'submit':
-                p_id, s_problem_options, path, blanks, standard = problem_gen(stu_id, os.path.join(dist, f"str{id}.png"), s_problem, p_type)
+                p_id, s_problem_options, path, blanks, standard = problem_gen(stu_id, os.path.join(dist, f"str{id}.png"), s_problem, item['type'])
                 standards_list.append(standard)
             if 'rand_options' in item and item['rand_options']:
                 s_problem_options = random.sample(s_problem_options, len(s_problem_options))
@@ -187,7 +209,8 @@ def walk_dir(dir):
     dic = defaultdict(list)
     for root, dirs, files in os.walk(dir):
         for f in files:
-            dic[root].append(os.path.join(root, f))
+            if re.match(r"^(.*)\.md$", f) is not None:
+                dic[root].append(os.path.join(root, f))
     return dic
 
 def main_rawtext(args):

@@ -60,7 +60,7 @@
      login_id_rules: [],
     }),
     methods: {
-      ...mapMutations(['changeLogin']),
+      ...mapMutations(['changeLogin','update_submit']),
       login: function () {
         var l_id = md5(this.login_id)
         var l_password = md5(this.login_password)
@@ -71,6 +71,9 @@
           data: {id: l_id, password:l_password}
         }).then(res => {
           if (res.data.code === 0) {
+            if (that.$store.state.Authorization !== res.data.path) {
+              that.update_submit({submit: false})
+            }
             that.changeLogin({ Authorization: res.data.path, id: that.login_id });
             that.$router.replace('/Exam');
           } else {

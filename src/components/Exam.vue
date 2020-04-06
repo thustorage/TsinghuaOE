@@ -39,18 +39,17 @@
                 <v-container fluid>
                   <v-row dense>
                     <v-col
-                     v-if="item.type==='select'"
+                     v-if="item.type==='select' || item.type==='judge'"
                      cols="12"
                     >
                       <v-select
-                        v-if="item.type==='select'"
+                        v-if="item.type==='select' || item.type==='judge'"
                         v-model="answers[item.id]"
                         :items="item.options"
                         :label="item.label"
                         :multiple="item.multiple"
                       ></v-select>
                     </v-col>
-                    
                     <v-col
                       v-for="blank in item.blanks"
                       :key="blank"
@@ -61,6 +60,7 @@
                         v-model="answers[item.id][blank]"
                         clearable="true"
                         filled
+                        rows=1
                         auto-grow
                         outlined
                         :label="blank"
@@ -77,7 +77,7 @@
                         filled
                         auto-grow
                         outlined
-                        label="请在此输入答案"
+                        label="如有非填空回答，请在此填写。"
                       ></v-textarea>
                     </v-col>
                   </v-row>
@@ -135,10 +135,12 @@
 <script>
   import md5 from 'js-md5';
   import axios from 'axios';
-
+  import { mapMutations } from 'vuex';
   export default {
     name: 'Exam',
     mounted: function () {
+      this.submitted = this.$store.state.submitted;
+      console.log(this.submitted)
       let that = this;
       axios({
         method: 'post',
@@ -190,6 +192,7 @@
       },
     },
     methods: {
+      ...mapMutations(['update_submit']),
       _autosubmit () {
         let that = this;
           this.timer = setInterval( () => {
@@ -240,15 +243,17 @@
         }).then(res => {
           if (res.data.code === 0) {
             alert("提交成功！请注意：以最后一次提交的内容为准。");
-            console.log(res.data);
             that.submitted = true;
+            that.update_submit({submit: true});
           } else {
             alert(res.data.message);
             that.submitted = false;
+            that.update_submit({submit: false});
           }
         }).catch(error => {
           alert('提交失败');
           that.submitted = false;
+          that.update_submit({submit: false});
           console.log(error);
         }).then(
           ()=> {
