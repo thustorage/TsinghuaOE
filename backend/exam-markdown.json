@@ -2,21 +2,65 @@
     "name": "《系统与体系结构》期中考试",
     "items": [
         {
-            "problem_type": "./problems-markdown/choice",
+            "problem_type": "./ComputerOrganizationExam/mid/Selective/chap2",
+            "label": "单项选择",
+            "type": "select",
+            "multiple": false,
+            "num": 4
+        },
+        {
+            "problem_type": "./ComputerOrganizationExam/mid/Selective/chap3",
+            "label": "单项选择",
+            "type": "select",
+            "multiple": false,
+            "num": 5
+        },
+        {
+            "problem_type": "./ComputerOrganizationExam/mid/Selective/chap4",
             "label": "单项选择",
             "type": "select",
             "multiple": false,
             "num": 1
         },
         {
-            "problem_type": "./problems-markdown/judge",
+            "problem_type": "./ComputerOrganizationExam/mid/TrueOrFalse",
             "label": "判断正误",
-            "type": "select",
+            "type": "judge",
             "multiple": false,
+            "num": 10
+        },
+        {
+            "problem_type": "./ComputerOrganizationExam/mid/Problems/cpu",
+            "label": "",
+            "type": "text",
             "num": 1
         },
         {
-            "problem_type": "./problems-markdown/big",
+            "problem_type": "./ComputerOrganizationExam/mid/Problems/two-complement",
+            "label": "",
+            "type": "text",
+            "num": 1
+        },
+        {
+            "problem_type": "./ComputerOrganizationExam/mid/Problems/IEEEfloat",
+            "label": "",
+            "type": "text",
+            "num": 1
+        },
+        {
+            "problem_type": "./ComputerOrganizationExam/mid/Problems/pack-01",
+            "label": "",
+            "type": "text",
+            "num": 1
+        },
+        {
+            "problem_type": "./ComputerOrganizationExam/mid/Problems/array",
+            "label": "",
+            "type": "text",
+            "num": 1
+        },
+        {
+            "problem_type": "./ComputerOrganizationExam/mid/Problems/stack",
             "label": "",
             "type": "text",
             "num": 1
