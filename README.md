@@ -70,7 +70,8 @@ gunicorn --access-logfile acc.log --error-logfile err.log --log-level info -w4 -
 *注意：*
 `./backend/index.py`中的`REDIS_URL`需要视情况修改。
 
-##　可供参考的Nginx配置文件
+
+## 可供参考的Nginx配置文件
 
 ```
 ....
