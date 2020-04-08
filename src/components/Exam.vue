@@ -15,7 +15,7 @@
         <template v-for="item in items">
           <v-stepper-step
             :key="`${item.id}-step`"
-            :complete="e1 > item.id"
+            :complete="submitteds[item.id]"
             :step="item.id"
             editable
           >
@@ -77,7 +77,7 @@
                         filled
                         auto-grow
                         outlined
-                        label="如有非填空回答，请在此填写。"
+                        :label="item.label"
                       ></v-textarea>
                     </v-col>
                   </v-row>
@@ -100,6 +100,14 @@
             >
               下一题
             </v-btn>
+            <v-btn
+              v-if="item.type!=='submit'"
+              color="primary"
+              class="mx-4"
+              @click="submit_one(item.id)"
+            >
+              提交
+            </v-btn>
             <v-card
               v-if="item.type==='submit'"
               class="mb-12"
@@ -121,7 +129,7 @@
                   :disabled="enable_submit"
                   @click="submit"
                 >
-                确认提交
+                提交所有答案
                 </v-btn>
               </v-card-actions>
             </v-card>
@@ -169,7 +177,7 @@
         that.$router.replace('/');
         console.log(error)
       });
-      this._autosubmit();
+      // this._autosubmit();
     },
     beforeDestroy: function() {
       clearInterval(this.timer);
@@ -182,7 +190,8 @@
       index: 1,
       items: [
       ],
-      answers: {}
+      answers: {},
+      submitteds: {}
     }),
     watch: {
       steps (val) {
@@ -228,6 +237,33 @@
         } else {
           this.e1 = n - 1
         }
+      },
+      submit_one (id) {
+        axios({
+          method: 'post',
+          url: '/app/submit',
+          data: {
+            id: md5(that.$store.state.id),
+            token: this.$store.state.Authorization,
+            answers: {id: this.answers[id]}
+          }
+        }).then(res => {
+          if (res.data.code === 0) {
+            alert("提交成功！请注意：以最后一次提交的内容为准。");
+            that.submitteds[id] = true;
+          } else {
+            alert(res.data.message);
+            that.submitteds[id] = false;
+          }
+        }).catch(error => {
+          alert('提交失败');
+          that.submitteds[id] = false;
+          console.log(error);
+        }).then(
+          ()=> {
+            that.enable_submit = false;
+          }
+        );
       },
       submit () {
         this.enable_submit = true;
