@@ -71,7 +71,7 @@ gunicorn --access-logfile acc.log --error-logfile err.log --log-level info -w4 -
 `./backend/index.py`中的`REDIS_URL`需要视情况修改。
 
 
-## 可供参考的Nginx配置文件
+### 可供参考的Nginx配置文件
 
 ```
 ....
@@ -93,4 +93,30 @@ gunicorn --access-logfile acc.log --error-logfile err.log --log-level info -w4 -
                 alias /home/ubuntu/develop/exam/backend/midterm;
         }
 ......
+```
+
+### 获取考试答案
+
+根据学生id的md5 code可以从redis中获取到学生有关考试的dic，形如：
+```json
+{
+        "stu_id": "xxxx",
+        "password": "xxxx",
+        "token": "TOKEN"
+}
+```
+通过`TOEKN`可以从redis中获取到该学生在该场考试中的相关信息，其中标准答案和学生的答案形如：
+```json
+{
+        ...
+        "standards": {
+                "0":{...},
+                "1":{...}
+        },
+        "answers": {
+                "0":{...},
+                "1":{...}
+        }
+        ...
+}
 ```
