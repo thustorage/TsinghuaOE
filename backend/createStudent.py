@@ -48,8 +48,6 @@ else:
     for item in stu_info:
         if 'password' not in stu_info[item] or stu_info[item]['password'] == "":
             stu_info[item]['password'] = password_gen(item)
-        print(json.dumps({'stu_id': item, 'password': md5(stu_info[item]['password'])}))
-        r.set(md5(item), json.dumps({'stu_id': item, 'password': md5(stu_info[item]['password'])}))
-        print(r.get(md5(item)))
+        r.set(md5(item), json.dumps({'stu_id': item, 'password': md5(stu_info[item]['password'])}))        
     if args.save:
         json.dump(stu_info, open(args.file, "w"))

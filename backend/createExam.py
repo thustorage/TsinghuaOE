@@ -37,45 +37,12 @@ def read_json(path):
     f.close()
     return info
 
-def problem_gen_rawtext(id, dist, problem):
-    flag = 63
-    added = 0
-    acc = 0
-    text = list(problem['text'])
-    for i, t in enumerate(text):
-        acc += chr_width(t)
-        if t == '\n':
-            acc = 0
-        if (acc) % flag <= 1 and i > 1 and acc > 1:
-            text.insert((i+added), '\n')
-            added += 1
-            acc = 0
-    text = ''.join(text)
-    fontSize = 20
-    lines = text.split('\n')
-    im = Image.new("RGB", (650, len(lines)*(fontSize+5)), (255, 255, 255))
-    dr = ImageDraw.Draw(im)
-    font = ImageFont.truetype('wqy-zenhei.ttc', fontSize)
-    dr.text((0, 0), text, font=font, fill="#000000")
-    im = im.convert('RGBA')
-
-    wm_front = ImageFont.truetype('wqy-zenhei.ttc', int(fontSize/3))
-    wm_layer = Image.new("RGBA", im.size, (255, 255, 255, 0))
-    wm_dr = ImageDraw.Draw(wm_layer)
-    wm_dr.text((int(im.size[0]/2), int(fontSize/2)), str(id), font=font, fill=(0,0,0,80))
-
-    im = Image.alpha_composite(im, wm_layer)
-    im.save(dist)
-    options = problem['options']
-    return problem['text'], options, dist
-
 def problem_gen_markdown(id, dist, problem, p_type):
     from tempfile import NamedTemporaryFile
     import pypandoc
     name_options = []
     name_blanks = []
     standard = {}
-    print(problem)
     with open(problem) as pf:
         with NamedTemporaryFile("w") as tf:
             options = []
@@ -102,7 +69,7 @@ def problem_gen_markdown(id, dist, problem, p_type):
                     for item in blank_re.findall(line):
                         blanks.append(item)
                         name_blanks.append(f"<{blank_index}>")
-                        line = blank_re.sub(f"[<  {blank_index}  >](10.0.0.0)", line, 1)
+                        line = blank_re.sub(f"[<  {blank_index}  >](0.0.0.0)", line, 1)
                         blank_index += 1
                     tf.write(line)
                 elif re.match(r"^\$ (.*)", line) is not None:
@@ -120,17 +87,16 @@ def problem_gen_markdown(id, dist, problem, p_type):
                 insert_list = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']
                 for index, (op_id, option) in enumerate(s_options):
                     option = list(option)
-                    option.insert(2, insert_list[index] + ': ')
+                    option.insert(2, chr(index+65) + ': ')
                     option_t = ''.join(option) + '\n'
                     tf.write(option_t)
                     name_options.append(insert_list[index])
             elif p_type == 'judge':
                 standard['op'] = options[0]
-                name_options = ['正确', '错误']
+                name_options = ['T', 'F']
             else:
                 pass
             tf.flush()
-            # pypandoc.convert(tf.name, 'html', format='md', outputfile=tmp_dist)
             with NamedTemporaryFile("w") as html_tf:
                 ori_path = os.path.dirname(os.path.realpath(__file__))
                 tmp_dist = os.path.realpath(dist)
@@ -143,20 +109,19 @@ def problem_gen_markdown(id, dist, problem, p_type):
                 driver.get(f"file:{html_path}")
                 scroll_height = driver.execute_script('return document.body.scrollHeight')
                 scroll_width = driver.execute_script('return document.body.scrollWidth')
-                driver.set_window_size(scroll_width, scroll_height+80)
+                driver.set_window_size(scroll_width, scroll_height+200)
                 with NamedTemporaryFile() as image_tf:
                     driver.save_screenshot(image_tf.name)
                     os.chdir(ori_path)
                     im = Image.open(image_tf.name)
                     im = im.convert('RGBA')
-                    wm_front = ImageFont.truetype('wqy-zenhei.ttc', 10)
+                    wm_front = ImageFont.truetype('DejaVuSans.ttf', 15)
                     wm_layer = Image.new("RGBA", im.size, (255, 255, 255, 0))
                     wm_dr = ImageDraw.Draw(wm_layer)
                     for i in range (10):
                         wm_dr.text((int(im.size[0]/10 * i), int(im.size[1]/10 * i)), str(id), font=wm_front, fill=(0,0,0,80))
                     im = Image.alpha_composite(im, wm_layer)
                     im.save(dist)
-                
 
     return problem, name_options, dist, name_blanks, standard
 
@@ -192,7 +157,7 @@ def exam_gen(r, stu_id, token, dist, items, problems, p_type):
                     'multiple': item['multiple'] if 'multiple' in item else '',
                     'title': item['title'] if 'title' in item else '',
                     'body': item['body'] if 'body' in item else '',
-                    'p_id': p_id
+                    'p_id': p_id # won't send to student.
                 }
             ]
             id += 1
@@ -213,27 +178,6 @@ def walk_dir(dir):
                 dic[root].append(os.path.join(root, f))
     return dic
 
-def main_rawtext(args):
-    stu_info = read_json(args.file)
-    problem_info = read_json(args.problem)
-    exam_info = read_json(args.exam)
-
-    problem_set = {}
-    for index in problem_info:
-        problem_set_path = problem_info[index]
-        problem_list = []
-        for path in problem_set_path:
-            problem_list += [read_json(path)]
-        problem_set[index] = problem_list
-
-    for stu_id in stu_info:
-        stu_token = token_gen(stu_id, exam_info['name'])
-        stu_dist = os.path.join(args.dist, stu_token)
-        exam_gen(r, stu_id, stu_token, stu_dist, exam_info['items'], problem_set, 'rawtext')
-        ori_dit = json.loads(r.get(md5(stu_id)))
-        ori_dit['token'] = stu_token
-        r.set(md5(stu_id), json.dumps(ori_dit))
-
 def get_webd_option():
     option = webdriver.FirefoxOptions()
     option.add_argument('--headless')
@@ -252,7 +196,7 @@ def main_markdown(args):
         return
     problems = walk_dir(problem_info['problem_dir'])
 
-    for stu_id in stu_info:
+    for index, stu_id in enumerate(stu_info):
         global driver
         option = get_webd_option()
         driver = webdriver.Firefox('./driver', firefox_options=option)
@@ -263,6 +207,7 @@ def main_markdown(args):
         ori_dit = json.loads(r.get(md5(stu_id)))
         ori_dit['token'] = stu_token
         r.set(md5(stu_id), json.dumps(ori_dit))
+        print(f"\r{index}/{len(stu_info)}")
         
         
 
@@ -272,16 +217,20 @@ if __name__ == '__main__':
     parser.add_argument("-f", "--file", type=str, help="Student meta data file.")
     parser.add_argument("-p", "--problem", type=str, help="Problem meta data file.")
     parser.add_argument("-e", "--exam", type=str, help="Exam meta data file.")
-    parser.add_argument("-t", "--type", choices=['markdown', 'rawtext'], default='markdown', help="Problem generating backend.")
+    parser.add_argument("-A", "--redis-address", type=str, default='127.0.0.1', help='Address for redis connection.')
+    parser.add_argument("-P", "--redis-port", type=int, default=6379, help='Port for redis connection.')
+    parser.add_argument("-RP", "--redis-password", type=str, default=None, help='Passsword for redis connection.')
     args = parser.parse_args()
 
     ## Connect to Redis
     # TODO: Make redis connection configurable.
-    pool = redis.ConnectionPool(host='127.0.0.1', port=6379)
+    pool = redis.ConnectionPool(
+        host=args.redis_address,
+        port=args.redis_port,
+        password=args.redis_password
+    )
     r = redis.Redis(connection_pool=pool)
 
-    if (args.type=='rawtext'):
-        main_rawtext(args)
-    else:
-        main_markdown(args)
+    
+    main_markdown(args)
 
