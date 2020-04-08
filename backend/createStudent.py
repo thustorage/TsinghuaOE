@@ -8,9 +8,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-f", "--file", type=str, help='The json file with students information is needed. A password will be generated, if no password is provided in this json.')
 parser.add_argument("-s", "--save", action='store_true', default=True, help='Save password back to the json file, if the password is generated.')
 parser.add_argument("-c", "--clean", action='store_true', default=False, help='Delete the provided student IDs in the redis server.')
-parser.add_argument("-a", "--redis-address", type=str, default='127.0.0.1', help='Address for redis connection.')
-parser.add_argument("-c", "--redis-port", type=int, default=6379, help='Port for redis connection.')
-parser.add_argument("-c", "--redis-password", type=str, default=None, help='Passsword for redis connection.')
+parser.add_argument("-A", "--redis-address", type=str, default='127.0.0.1', help='Address for redis connection.')
+parser.add_argument("-P", "--redis-port", type=int, default=6379, help='Port for redis connection.')
+parser.add_argument("-RP", "--redis-password", type=str, default=None, help='Passsword for redis connection.')
 
 args = parser.parse_args()
 
