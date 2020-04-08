@@ -5,7 +5,7 @@ import logging
 
 app = Flask(__name__)
 
-app.config['REDIS_URL']='redis://:@localhost:6379/'
+app.config['REDIS_URL']='redis://:@localhost:6379/' # TODO
 app.debug = True
 
 redis_store = FlaskRedis(app)
