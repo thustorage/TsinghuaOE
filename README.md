@@ -50,7 +50,7 @@ python createStudent.py -h
 请参考`./backend/exam.json`描述文件。
 ```
 cd ./backend
-python createExam.py -d midterm -f s.json -p problems.json -e exam.json
+python createExam.py -d midterm -f stu.json -p problems.json -e exam.json
 ```
 本命令将在`./backend/`目录下生成`./midterm`（由`-d`配置），请将`80`端口的`{url}/midterm`的网络访问解析至`.midterm`。
 
