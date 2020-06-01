@@ -26,7 +26,7 @@ npm run build
 
 | type | name |
 | --- | --- |
-| bin | redis, pandoc, firefox |
+| bin | redis, pandoc, firefox, python3 |
 | python pkg | pillow, flask, flask-redis, pypandoc, gunicorn, selenium |
 
 #### 运行环境
