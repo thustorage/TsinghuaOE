@@ -144,11 +144,16 @@
   import md5 from 'js-md5';
   import axios from 'axios';
   import { mapMutations } from 'vuex';
+  function isEmpty(dic) {
+    for (let key in dic) {
+      return false;
+    }
+    return true;
+  }
   export default {
     name: 'Exam',
     mounted: function () {
       this.submitted = this.$store.state.submitted;
-      console.log(this.submitted)
       let that = this;
       axios({
         method: 'post',
@@ -162,11 +167,17 @@
           for (let item in res.data.items) {
             that.items.push(res.data.items[item]);
             if(res.data.items[item].type==='text') {
-              this.answers[res.data.items[item].id] = {};
+              that.answers[res.data.items[item].id] = {};
             }
           }
           for (let item in res.data.answers) {
             that.answers[item] = res.data.answers[item];
+            if (res.data.answers[item].length == 0 || isEmpty(res.data.answers[item]) ) {
+              continue;
+            }
+            else {
+              that.submitteds[item] = true;
+            }
           }
         } else {
           alert(res.data.message)
@@ -239,18 +250,26 @@
         }
       },
       submit_one (id) {
+        let ans_package = {};
+        ans_package[id] = this.answers[id];
+        if (ans_package[id] === null || ans_package[id] === undefined || isEmpty(ans_package[id])) {
+          alert("未填写答案");
+          return;
+        }
+        let that = this;
         axios({
           method: 'post',
           url: '/app/submit',
           data: {
             id: md5(that.$store.state.id),
             token: this.$store.state.Authorization,
-            answers: {id: this.answers[id]}
+            answers: ans_package
           }
         }).then(res => {
           if (res.data.code === 0) {
-            alert("提交成功！请注意：以最后一次提交的内容为准。");
+            // alert("提交成功！请注意：以最后一次提交的内容为准。");
             that.submitteds[id] = true;
+            that.nextStep(id);
           } else {
             alert(res.data.message);
             that.submitteds[id] = false;
@@ -259,11 +278,7 @@
           alert('提交失败');
           that.submitteds[id] = false;
           console.log(error);
-        }).then(
-          ()=> {
-            that.enable_submit = false;
-          }
-        );
+        })
       },
       submit () {
         this.enable_submit = true;
@@ -279,21 +294,24 @@
         }).then(res => {
           if (res.data.code === 0) {
             alert("提交成功！请注意：以最后一次提交的内容为准。");
-            that.submitted = true;
-            that.update_submit({submit: true});
+            for(let key in that.answers) {
+              if (that.answers[key] === null || that.answers[key] === undefined || isEmpty(that.answers[key])) {
+               continue;
+              }
+              that.submitteds[key] = true;
+            }
           } else {
             alert(res.data.message);
-            that.submitted = false;
-            that.update_submit({submit: false});
+            for(let key in that.answers) {
+              that.submitteds[key] = false;
+            }
           }
         }).catch(error => {
           alert('提交失败');
-          that.submitted = false;
-          that.update_submit({submit: false});
           console.log(error);
         }).then(
-          ()=> {
-            that.enable_submit = false;
+          ()=>{
+            this.enable_submit = false;
           }
         );
       }
