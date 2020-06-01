@@ -124,7 +124,12 @@ def submit():
             app.logger.warning(warning_info)
         dic['ip'].append(request.headers['X-Real-Ip'])
 
-    dic['answers'] = data['answers']
+    if 'answers' not in dic:
+        dic['answers'] = {}
+
+    for key in data['answers']:
+        dic['answers'][key] = data['answers'][key]
+
     ret = redis_store.set(data['token'], json.dumps(dic) )
     if (ret):
         return {'code':0, 'message': ret}
